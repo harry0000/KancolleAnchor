@@ -1,0 +1,7 @@
+# KancolleArcade
+
+WIP
+
+#LICENSE
+
+MIT
