@@ -1,10 +1,11 @@
 package com.harry0000.kancolle.ac
 
-import org.openqa.selenium.By
+import java.net.URL
+import java.util.concurrent.TimeUnit
+
+import org.openqa.selenium.{By, WebElement}
 import org.openqa.selenium.chrome.ChromeDriver
 import spray.json.DefaultJsonProtocol
-
-import scala.collection.JavaConverters._
 
 case class Place(name: String, address: String)
 
@@ -12,12 +13,44 @@ case class Prefecture(code: Int, name: String, places: Seq[Place])
 
 case class Area(name: String, prefectures: Seq[Prefecture])
 
-object PlaceCrawler extends DefaultJsonProtocol {
+trait Crawler {
+  private val driver = new ChromeDriver()
+
+  protected def crawl[A](host: String, page: String)(f: => A): A = {
+    driver.get(new URL(new URL(host), page).toString)
+    val result = f
+    driver.quit()
+    result
+  }
+
+  protected def findElements(by: By): Seq[WebElement] = {
+    import scala.collection.JavaConverters._
+    driver.findElements(by).asScala
+  }
+
+  protected def wait(time: Long, unit: TimeUnit): Wait = new Wait(time, unit)
+
+  class Wait(time: Long, unit: TimeUnit) {
+    import org.openqa.selenium.support.ui.{ExpectedCondition, ExpectedConditions, WebDriverWait}
+
+    def until[A](condition: ExpectedCondition[A]): A = {
+      new WebDriverWait(driver, TimeUnit.SECONDS.convert(time, unit)).until(condition)
+    }
+
+    def visibilityOf(by: By): WebElement = {
+      until(ExpectedConditions.visibilityOfElementLocated(by))
+    }
+
+    def invisibilityOf(by: By): Boolean = {
+      until(ExpectedConditions.invisibilityOfElementLocated(by))
+    }
+  }
+}
+
+object PlaceCrawler extends Crawler with DefaultJsonProtocol {
   implicit val placeFormat       = jsonFormat2(Place)
   implicit val prefectureFormat  = jsonFormat3(Prefecture)
   implicit val areaFormat        = jsonFormat2(Area)
-
-  implicit private val driver = new ChromeDriver()
 
   private val host = "https://kancolle-arcade.net/"
   private val page = "ac/#/place"
@@ -83,50 +116,28 @@ object PlaceCrawler extends DefaultJsonProtocol {
     )
   )
 
-  def crawl(): Seq[Area] = {
-    driver.get(host + page)
+  def crawl(): Seq[Area] = crawl(host, page) {
+    import java.util.concurrent.TimeUnit.SECONDS
 
-    val s =
-      areas.map { case (area, prefectures) =>
-        Wait(5).visibilityOf(By.linkText(area)).click()
+    areas.map { case (area, prefectures) =>
+      wait(5L, SECONDS).visibilityOf(By.linkText(area)).click()
 
-        val list =
-          prefectures.map { case (code, name) =>
-            Wait(5).visibilityOf(By.linkText(name)).click()
-            Prefecture(
-              code,
-              name,
-              driver.findElements(By.cssSelector("li.fc-place-item")).asScala.map { e =>
-                Place(
-                  e.findElement(By.cssSelector("div.fc-place-placename")).getText,
-                  e.findElement(By.cssSelector("div.fc-place-address")).getText
-                )
-              }
-            )
-          }
+      val list =
+        prefectures.map { case (code, name) =>
+          wait(5L, SECONDS).visibilityOf(By.linkText(name)).click()
+          Prefecture(
+            code,
+            name,
+            findElements(By.cssSelector("li.fc-place-item")).map { e =>
+              Place(
+                e.findElement(By.cssSelector("div.fc-place-placename")).getText,
+                e.findElement(By.cssSelector("div.fc-place-address")).getText
+              )
+            }
+          )
+        }
 
-        Area(area, list)
-      }.toList
-
-    driver.quit()
-
-    s
-  }
-
-  private final case class Wait(seconds: Int) {
-    import org.openqa.selenium.support.ui.{ExpectedCondition, ExpectedConditions, WebDriverWait}
-    import org.openqa.selenium.{WebDriver, WebElement}
-
-    def until[A](condition: ExpectedCondition[A])(implicit driver: WebDriver): A = {
-      new WebDriverWait(driver, seconds).until(condition)
-    }
-
-    def visibilityOf(by: By)(implicit driver: WebDriver): WebElement = {
-      until(ExpectedConditions.visibilityOfElementLocated(by))
-    }
-
-    def invisibilityOf(by: By)(implicit driver: WebDriver): Boolean = {
-      until(ExpectedConditions.invisibilityOfElementLocated(by))
-    }
+      Area(area, list)
+    }.toList
   }
 }
