@@ -1,5 +1,6 @@
 *.class
 *.log
+*.exe
 
 # sbt specific
 .cache
@@ -16,6 +17,9 @@ project/plugins/project/
 .scala_dependencies
 .idea/
 .idea_modules/
+
+# Dependency directories
+node_modules
 
 # Chrome web driver
 driver/*
