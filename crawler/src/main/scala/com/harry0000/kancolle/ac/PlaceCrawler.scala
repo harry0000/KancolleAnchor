@@ -1,7 +1,6 @@
 package com.harry0000.kancolle.ac
 
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 import org.openqa.selenium.{By, WebElement}
 import org.openqa.selenium.chrome.ChromeDriver
@@ -28,13 +27,13 @@ trait Crawler {
     driver.findElements(by).asScala
   }
 
-  protected def wait(time: Long, unit: TimeUnit): Wait = new Wait(time, unit)
+  protected def waiting(timeOutInSeconds: Long): Wait = new Wait(timeOutInSeconds)
 
-  class Wait(time: Long, unit: TimeUnit) {
+  class Wait(timeOutInSeconds: Long) {
     import org.openqa.selenium.support.ui.{ExpectedCondition, ExpectedConditions, WebDriverWait}
 
     def until[A](condition: ExpectedCondition[A]): A = {
-      new WebDriverWait(driver, TimeUnit.SECONDS.convert(time, unit)).until(condition)
+      new WebDriverWait(driver, timeOutInSeconds).until(condition)
     }
 
     def visibilityOf(by: By): WebElement = {
@@ -120,11 +119,11 @@ object PlaceCrawler extends Crawler with DefaultJsonProtocol {
     import java.util.concurrent.TimeUnit.SECONDS
 
     areas.map { case (area, prefectures) =>
-      wait(5L, SECONDS).visibilityOf(By.linkText(area)).click()
+      waiting(5L).visibilityOf(By.linkText(area)).click()
 
       val list =
         prefectures.map { case (code, name) =>
-          wait(5L, SECONDS).visibilityOf(By.linkText(name)).click()
+          waiting(5L).visibilityOf(By.linkText(name)).click()
           Prefecture(
             code,
             name,
