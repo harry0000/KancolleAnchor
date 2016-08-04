@@ -1,0 +1,17 @@
+@(body: Html)(implicit messages: Messages)
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="author" content="harry0000jp">
+    <meta name="description" content="@Messages("html.description")">
+    <meta name="format-detection" content="telephone=no,address=yes,email=no">
+    <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+    <link rel="apple-touch-icon" href="@routes.Assets.versioned("images/icon.png")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+    <title>@Messages("html.title")</title>
+  </head>
+  <body>
+    @body
+  </body>
+</html>
