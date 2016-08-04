@@ -213,7 +213,7 @@ class AnchorsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wit
       )
     }}
 
-    "return NotFound when update anchor which does not exist" in before { withAutoRollback { implicit session =>
+    "return NotFound when anchor does not exist" in before { withAutoRollback { implicit session =>
       val admiral = createAdmiral()
       val anchor  = createAnchor(admiral, getTestAnchor(admiral))
 
@@ -231,6 +231,56 @@ class AnchorsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wit
 
       val weighed = UTCDateTime()
       val result = put(admiral, anchor, Json.obj("weighed" -> weighed.toEpochMilli))
+      status(result) mustBe SERVICE_UNAVAILABLE
+      contentType(result) mustBe Some("application/json")
+      contentAsJson(result) mustBe Maintenance.toJson
+    }}
+  }
+
+  "delete action" should {
+    "can delete anchor" in before { withAutoRollback { implicit session =>
+      val admiral = createAdmiral()
+      val anchor  = getTestAnchor(admiral)
+      val deleted = createAnchor(admiral, anchor)
+      val created = createAnchor(admiral, anchor.copy(number = anchor.number + 1))
+
+      val result = drop(admiral, deleted)
+      status(result) mustBe OK
+      findAnchor(admiral, deleted) mustBe None
+      findAnchor(admiral, created) mustBe Some(Anchor(
+        created.prefecture,
+        created.place,
+        created.credits,
+        created.page,
+        created.number,
+        Some(admiral.id),
+        Some(Admiral(admiral.admiralId, admiral.name)),
+        created.anchored.get,
+        None,
+        None
+      ))
+    }}
+
+    "return NotFound when anchor does not exist" in before { withAutoRollback { implicit session =>
+      val admiral = createAdmiral()
+      val anchor = createAnchor(admiral, getTestAnchor(admiral))
+
+      val result = drop(admiral, anchor)
+      status(result) mustBe OK
+
+      val notFound = drop(admiral, anchor)
+      status(notFound) mustBe NOT_FOUND
+      contentType(notFound) mustBe Some("application/json")
+      contentAsJson(notFound) mustBe AnchorNotFound.toJson
+    }}
+
+    "return ServiceUnavailable when maintenance" in before { withAutoRollback { implicit session =>
+      val admiral = createAdmiral()
+      val anchor = createAnchor(admiral, getTestAnchor(admiral))
+
+      startMaintenance()
+
+      val result = drop(admiral, anchor)
       status(result) mustBe SERVICE_UNAVAILABLE
       contentType(result) mustBe Some("application/json")
       contentAsJson(result) mustBe Maintenance.toJson
@@ -266,6 +316,10 @@ class AnchorsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wit
 
   def put(admiral: Admiral.ForDB, anchor: Anchor.ForRest, json: JsValue): Future[Result] = {
     route(app, FakeRequest(PUT, uri(admiral, anchor)).withJsonBody(json)).get
+  }
+
+  def drop(admiral: Admiral.ForDB, anchor: Anchor.ForRest): Future[Result] = {
+    route(app, FakeRequest(DELETE, uri(admiral, anchor))).get
   }
 
 }
