@@ -4,7 +4,7 @@ import arcade.Errors.Maintenance
 import models.dao._
 import models.dto.Admiral
 import org.scalatestplus.play._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import play.api.test.Helpers._
 import play.api.test._
 import scalikejdbc._
@@ -51,7 +51,7 @@ class AdmiralsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wi
         route(
           app,
           FakeRequest(PUT, uri(admiral))
-            .withJsonBody(Json.toJson(Admiral(admiral.admiralId, name, admiral.created)))
+            .withJsonBody(Json.obj("name" -> name))
         ).get
 
       status(result) mustBe OK
@@ -60,6 +60,33 @@ class AdmiralsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wi
       updated.admiralId mustBe admiral.admiralId
       updated.created mustBe admiral.created
       updated.name mustBe name
+    }}
+
+    "can update name by null" in before { withAutoRollback { implicit session =>
+      val admiral = createAdmiral()
+
+      // update name
+      val name = Some("名無し提督")
+      status(
+        route(
+          app,
+          FakeRequest(PUT, uri(admiral)).withJsonBody(Json.obj("name" -> name))
+        ).get
+      ) mustBe OK
+
+      // update name to null
+      val result =
+        route(
+          app,
+          FakeRequest(PUT, uri(admiral)).withJsonBody(Json.obj("name" -> JsNull))
+        ).get
+
+      status(result) mustBe OK
+
+      val updated = DB readOnly { implicit session => AdmiralDao.find(admiral.admiralId, admiral.created).get }
+      updated.admiralId mustBe admiral.admiralId
+      updated.created mustBe admiral.created
+      updated.name mustBe None
     }}
 
     "return ServiceUnavailable when maintenance" in before { withAutoRollback { implicit session =>
@@ -72,7 +99,7 @@ class AdmiralsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wi
         route(
           app,
           FakeRequest(PUT, uri(admiral))
-            .withJsonBody(Json.toJson(Admiral(admiral.admiralId, name, admiral.created)))
+            .withJsonBody(Json.obj("name" -> name))
         ).get
 
       status(result) mustBe SERVICE_UNAVAILABLE
@@ -83,6 +110,6 @@ class AdmiralsSpec extends PlaySpec with OneAppPerTest with ArcadeTestSupport wi
 
   def uri(admiral: Admiral.ForDB): String = uri(Admiral(admiral.admiralId, admiral.name, admiral.created))
 
-  def uri(admiral: Admiral.ForRest): String = "/admirals" + admiral.location
+  def uri(admiral: Admiral.ForRest): String = s"/admirals${admiral.location}?created_at=${admiral.created}"
 
 }

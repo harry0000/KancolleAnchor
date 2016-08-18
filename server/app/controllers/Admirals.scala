@@ -31,21 +31,23 @@ class Admirals @Inject() (val configuration: Configuration,
     }
   }}
 
-  def update(uid: String) = MaintenanceApiAction { Action(BodyParsers.parse.json) { req =>
-    req.body.validate[Admiral.ForRest] match {
-      case e: JsError =>
-        BadRequest(JsonParseError(e).toJson)
-      case JsSuccess(admiral, _) if uid != admiral.admiralId =>
-        BadRequest
-      case JsSuccess(admiral, _) =>
-        DB localTx { implicit session =>
-          AdmiralDao.find(admiral).map {
-            AdmiralDao.updateName(_, admiral.name)
-          } match {
-            case Some(1) => Ok
-            case _ => BadRequest
-          }
+  def update(uid: String, created_at: Option[Long]) = MaintenanceApiAction { Action(BodyParsers.parse.json) { req =>
+    (for {
+      c    <- created_at.toRight(BadRequest).right
+      name <- req.body.validate((JsPath \ 'name).readNullable[String](validAdmiralName))
+                      .asEither.left.map(e => BadRequest(JsonParseError(e).toJson)).right
+    } yield {
+      DB localTx { implicit session =>
+        AdmiralDao.find(uid, c).map {
+          AdmiralDao.updateName(_, name)
+        } match {
+          case Some(1) => Ok
+          case _       => BadRequest
         }
+      }
+    }) match {
+      case Right(r) => r
+      case Left(r)  => r
     }
   }}
 

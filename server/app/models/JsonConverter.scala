@@ -18,9 +18,12 @@ object Constants {
 object JsonConverter extends UIDInjector {
   import Constants._
 
-  private val validAdmiralId:   Reads[String] = minLength[String](1) andKeep maxLength[String](maxIdLength) andKeep verifying(uid.isValid)
-  private val validAdmiralName: Reads[String] = minLength[String](1) andKeep maxLength[String](maxNameLength)
-  private val validPrefecture:  Reads[Int]    = min(minPrefecture) andKeep max(maxPrefecture)
+  val validAdmiralId:   Reads[String] = minLength[String](1) andKeep maxLength[String](maxIdLength) andKeep verifying(uid.isValid)
+  val validAdmiralName: Reads[String] = minLength[String](1) andKeep maxLength[String](maxNameLength)
+  val validPrefecture:  Reads[Int]    = min(minPrefecture) andKeep max(maxPrefecture)
+  val validPage:   Reads[Int] = min(1) andKeep max(99)
+  val validNumber: Reads[Int] = min(1) andKeep max(999)
+  val validDatetime: Reads[Long] = min(0)
 
   implicit val admiralForDBWrites: Writes[Admiral.ForDB] = new Writes[Admiral.ForDB] {
     override def writes(o: Admiral.ForDB): JsValue = Json.obj(
@@ -33,7 +36,7 @@ object JsonConverter extends UIDInjector {
   implicit val admiralForRestFormat: Format[Admiral.ForRest] = Format((
       (JsPath \ 'admiralId).read[String](validAdmiralId) and
       (JsPath \ 'name     ).readNullable[String](validAdmiralName) and
-      (JsPath \ 'created  ).read[Long]
+      (JsPath \ 'created  ).read[Long](validDatetime)
     ).apply((admiralId, name, created) => Admiral(admiralId, name, created)),
     Json.writes[Admiral.ForRest]
   )
@@ -65,11 +68,11 @@ object JsonConverter extends UIDInjector {
       (JsPath \ 'prefecture).read[Int](validPrefecture) and
       (JsPath \ 'place     ).read[Int](min(0)) and
       (JsPath \ 'credits   ).read[Int](min(0)) and
-      (JsPath \ 'page      ).read[Int](min(1)) and
-      (JsPath \ 'number    ).read[Int](min(1)) and
+      (JsPath \ 'page      ).read[Int](validPage) and
+      (JsPath \ 'number    ).read[Int](validNumber) and
       (JsPath \ 'admiral   ).read[Admiral.ForJoin] and
-      (JsPath \ 'anchored  ).readNullable[Long] and
-      (JsPath \ 'weighed   ).readNullable[Long]
+      (JsPath \ 'anchored  ).readNullable[Long](validDatetime) and
+      (JsPath \ 'weighed   ).readNullable[Long](validDatetime)
     ).apply { (prefecture, place, credits, page, number, admiral, anchored, weighed) =>
       Anchor(prefecture, place, credits, page, number, admiral, anchored, weighed)
     },
@@ -92,10 +95,10 @@ object JsonConverter extends UIDInjector {
       (JsPath \ 'prefecture).read[Int](validPrefecture) and
       (JsPath \ 'place     ).read[Int](min(0)) and
       (JsPath \ 'credits   ).read[Int](min(0)) and
-      (JsPath \ 'page      ).read[Int](min(1)) and
-      (JsPath \ 'number    ).read[Int](min(1)) and
+      (JsPath \ 'page      ).read[Int](validPage) and
+      (JsPath \ 'number    ).read[Int](validNumber) and
       (JsPath \ 'spotter   ).read[Admiral.ForJoin] and
-      (JsPath \ 'reported  ).readNullable[Long]
+      (JsPath \ 'reported  ).readNullable[Long](validDatetime)
     ).apply { (prefecture, place, credits, page, number, spotter, reported) =>
       Spotting(prefecture, place, credits, page, number, spotter, reported)
     },

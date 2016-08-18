@@ -32,9 +32,9 @@ class Anchors @Inject() (val configuration: Configuration,
 
   private implicit val updateValueReads = new Reads[AnchorValues] {
     override def reads(json: JsValue): JsResult[AnchorValues] = {
-      ((json \ "page"   ).validateOpt[Int](min(1)) and
-       (json \ "number" ).validateOpt[Int](min(1)) and
-       (json \ "weighed").validateOpt[Long](min(0L))
+      ((json \ "page"   ).validateOpt[Int](validPage) and
+       (json \ "number" ).validateOpt[Int](validNumber) and
+       (json \ "weighed").validateOpt[Long](validDatetime)
       ).tupled match {
         case e: JsError => e
         case JsSuccess(v, _) =>

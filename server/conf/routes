@@ -8,7 +8,7 @@ GET     /                               controllers.Root.index
 # Rest APIs
 ## Admiral informations
 POST    /admirals                       controllers.Admirals.create
-PUT     /admirals/:uid                  controllers.Admirals.update(uid: String)
+PUT     /admirals/:uid                  controllers.Admirals.update(uid: String, created_at: Option[Long])
 DELETE  /admirals/:uid                  controllers.Admirals.delete(uid: String, key: Option[String])
 
 ## Anchors(waiting & playing arcade) informations
