@@ -1,0 +1,29 @@
+{
+  "name": "KanColleAnchor",
+  "version": "0.1.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify -t babelify -o ../public/javascripts/main.js src/main.js"
+  },
+  "author": "harry0000jp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harry0000/KancolleAnchor.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "component-ie": "^1.0.0",
+    "i18next": "^3.4.1",
+    "i18next-xhr-backend": "^1.1.0",
+    "superagent": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-plugin-module-resolver": "^2.0.0",
+    "babel-preset-es2015": "^6.13.2",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-1": "^6.13.0",
+    "babelify": "^7.3.0"
+  }
+}
