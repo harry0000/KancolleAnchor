@@ -116,8 +116,6 @@ object PlaceCrawler extends Crawler with DefaultJsonProtocol {
   )
 
   def crawl(): Seq[Area] = crawl(host, page) {
-    import java.util.concurrent.TimeUnit.SECONDS
-
     areas.map { case (area, prefectures) =>
       waiting(5L).visibilityOf(By.linkText(area)).click()
 
