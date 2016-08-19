@@ -5,8 +5,7 @@ import javax.inject.{Inject, Singleton}
 import arcade.Errors._
 import arcade.{MaintenanceApi, MaintenanceController}
 import models.dao.AdmiralDao
-import models.dto.Admiral
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.json._
 import play.api.mvc._
 import scalikejdbc.DB
@@ -18,14 +17,15 @@ class Admirals @Inject() (val configuration: Configuration,
 
   import models.JsonConverter._
 
+  val logger = Logger(this.getClass)
+
   def create = MaintenanceApiAction { Action {
     DB autoCommit { implicit session =>
       try {
         val admiral = AdmiralDao.create(UTCDateTime())
         Created(Json.toJson(admiral)).withHeaders(LOCATION -> ("/admirals" + admiral.location))
       } catch { case scala.util.control.NonFatal(e) =>
-        // TODO: logging
-        e.printStackTrace()
+        logger.error("Error while creating admiral", e)
         Conflict(DuplicateAdmiral.toJson)
       }
     }

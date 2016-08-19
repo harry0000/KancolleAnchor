@@ -6,11 +6,10 @@ import arcade.Errors._
 import arcade.{MaintenanceApi, MaintenanceController}
 import models.dao.{AdmiralDao, AnchorDao}
 import models.dto.Anchor
-import play.api.Configuration
 import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.api.mvc._
+import play.api.{Configuration, Logger}
 import scalikejdbc.DB
 import time.{ClockProvider, UTCDateTime}
 
@@ -19,6 +18,8 @@ class Anchors @Inject() (val configuration: Configuration,
                          implicit val clockProvider: ClockProvider) extends Controller with MaintenanceController with MaintenanceApi {
 
   import models.JsonConverter._
+
+  val logger = Logger(this.getClass)
 
   private case class Position(
     page: Int,
@@ -66,8 +67,7 @@ class Anchors @Inject() (val configuration: Configuration,
           val created = AnchorDao.create(anchor, admiral, UTCDateTime())
           Created(Json.toJson(created)).withHeaders(LOCATION -> ("/anchors" + created.location))
         } catch { case scala.util.control.NonFatal(e) =>
-          // TODO: logging
-          e.printStackTrace()
+          logger.error("Error while creating anchor", e)
           Conflict(DuplicateAnchor.toJson)
         }
       }) match {

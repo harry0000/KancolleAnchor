@@ -2,13 +2,13 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import arcade.{Config, DamageLevel, MaintenanceApi, MaintenanceController}
 import arcade.Errors._
+import arcade.{Config, DamageLevel, MaintenanceApi, MaintenanceController}
 import models.dao.{AdmiralDao, AnchorDao, SpottingDao}
 import models.dto.Spotting
-import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{Action, BodyParsers, Controller}
+import play.api.{Configuration, Logger}
 import scalikejdbc.DB
 import time.{ClockProvider, Duration, UTCDateTime}
 
@@ -18,6 +18,7 @@ class Spottings @Inject() (val configuration: Configuration,
 
   import models.JsonConverter._
 
+  val logger = Logger(this.getClass)
   val config = Config(configuration)
 
   def list(prefecture: Int, place: Int, uid: Option[String], created_at: Option[Long]) = MaintenanceApiAction { Action { req =>
@@ -52,8 +53,7 @@ class Spottings @Inject() (val configuration: Configuration,
             val created = SpottingDao.create(spotting, spotter, UTCDateTime())
             Created(Json.toJson(created)).withHeaders(LOCATION -> ("/spottings" + created.location))
           } catch { case scala.util.control.NonFatal(e) =>
-            // TODO: logging
-            e.printStackTrace()
+            logger.error("Error while creating spotting", e)
             Conflict(AnchorAlreadySpotted.toJson)
           }
         }
