@@ -15,8 +15,6 @@ libraryDependencies ++= Seq(
   "com.h2database"         %  "h2"                 % "1.4.191" /*% "test"*/
 )
 
-routesGenerator := InjectedRoutesGenerator
-
 scalikejdbcSettings // http://scalikejdbc.org/documentation/setup.html
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)

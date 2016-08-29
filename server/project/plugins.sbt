@@ -4,4 +4,4 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/maven-
 addSbtPlugin("org.scalikejdbc"   % "scalikejdbc-mapper-generator" % "2.4.0")
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.4")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.6")
